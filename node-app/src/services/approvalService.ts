@@ -34,7 +34,20 @@ export class ApprovalService {
       return this.recordApproval(invoice, user, "APPROVED");
     }
 
-    // In the single-approver implementation, either role may approve above 500,000.
+    // Invoices above 500,000 require two distinct approvers.
+    if (invoice.approvals.length >= 2) {
+      throw new Error("Invoice has already received the required approvals.");
+    }
+
+    if (invoice.approvals.length === 0) {
+      return this.recordApproval(invoice, user, "PENDING");
+    }
+
+    // The second approver must be a Director.
+    if (user.role !== "DIRECTOR") {
+      throw new Error("The second approver must be a Director.");
+    }
+
     return this.recordApproval(invoice, user, "APPROVED");
   }
 

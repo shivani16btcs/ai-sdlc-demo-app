@@ -75,13 +75,83 @@ describe("ApprovalService", () => {
   );
 
   it.each([manager, director])(
-    "allows $name to approve a 500,001 invoice with one approval",
+    "keeps a 500,001 invoice pending after first approval by $name",
     (approver) => {
       createInvoice(500001);
 
-      expectSingleApproval(service.approve("INV-001", approver), approver);
+      const result = service.approve("INV-001", approver);
+
+      expect(result.status).toBe("PENDING");
+      expect(result.approvals).toHaveLength(1);
+      expect(result.approvals[0]).toMatchObject({
+        approverId: approver.id,
+        approverName: approver.name,
+        approverRole: approver.role,
+      });
+      expect(result.approvals[0].approvedAt).toBeInstanceOf(Date);
     },
   );
+
+  it("approves a high-value invoice after a distinct Director's second approval", () => {
+    createInvoice(500001);
+    service.approve("INV-001", manager);
+
+    const result = service.approve("INV-001", director);
+
+    expect(result.status).toBe("APPROVED");
+    expect(result.approvals).toHaveLength(2);
+    expect(result.approvals[0]).toMatchObject({
+      approverId: manager.id,
+      approverName: manager.name,
+      approverRole: manager.role,
+    });
+    expect(result.approvals[1]).toMatchObject({
+      approverId: director.id,
+      approverName: director.name,
+      approverRole: director.role,
+    });
+    expect(result.approvals[0].approvedAt).toBeInstanceOf(Date);
+    expect(result.approvals[1].approvedAt).toBeInstanceOf(Date);
+  });
+
+  it("rejects a Manager as second approver without changing the invoice", () => {
+    createInvoice(500001);
+    service.approve("INV-001", director);
+    const originalSnapshot = structuredClone(repository.findById("INV-001"));
+
+    expect(() => service.approve("INV-001", manager)).toThrow(
+      "The second approver must be a Director.",
+    );
+
+    expect(repository.findById("INV-001")).toEqual(originalSnapshot);
+  });
+
+  it("rejects a duplicate approver without changing the invoice", () => {
+    createInvoice(500001);
+    service.approve("INV-001", manager);
+    const originalSnapshot = structuredClone(repository.findById("INV-001"));
+
+    expect(() => service.approve("INV-001", manager)).toThrow(
+      "The same user cannot approve an invoice twice.",
+    );
+
+    expect(repository.findById("INV-001")).toEqual(originalSnapshot);
+  });
+
+  it("rejects a third approval after two approvers without changing the invoice", () => {
+    createInvoice(500001);
+    service.approve("INV-001", manager);
+    service.approve("INV-001", director);
+    const originalSnapshot = structuredClone(repository.findById("INV-001"));
+
+    expect(() => service.approve("INV-001", {
+      id: "director-3",
+      name: "Director Three",
+      role: "DIRECTOR",
+    })).toThrow("Only pending invoices can be approved.");
+
+    expect(repository.findById("INV-001")).toEqual(originalSnapshot);
+  });
 
   it("rejects approval of an already approved invoice without changing it", () => {
     const invoice = createInvoice(50000);
