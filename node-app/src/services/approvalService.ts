@@ -1,4 +1,3 @@
-
 import type { Invoice, InvoiceStatus } from "../models/invoice.js";
 import type { User } from "../models/user.js";
 import { InvoiceRepository } from "../repositories/invoiceRepository.js";
@@ -13,9 +12,7 @@ export class ApprovalService {
       throw new Error("Invoice not found.");
     }
 
-    if (invoice.approvals.some(
-      (approval) => approval.approverId === user.id
-    )) {
+    if (invoice.approvals.some((approval) => approval.approverId === user.id)) {
       throw new Error("The same user cannot approve an invoice twice.");
     }
 
@@ -57,7 +54,7 @@ export class ApprovalService {
   private recordApproval(
     invoice: Invoice,
     user: User,
-    status: InvoiceStatus
+    status: InvoiceStatus,
   ): Invoice {
     const updatedInvoice: Invoice = {
       ...invoice,
@@ -66,10 +63,10 @@ export class ApprovalService {
         {
           approverId: user.id,
           approverRole: user.role,
-          approvedAt: new Date()
-        }
+          approvedAt: new Date(),
+        },
       ],
-      status
+      status,
     };
 
     return this.invoiceRepository.update(updatedInvoice);
