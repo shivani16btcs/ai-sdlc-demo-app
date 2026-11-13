@@ -2,6 +2,7 @@
 /** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
 const config = {
   testRunner: "vitest",
+  concurrency: 1,
 
   mutate: ["src/services/approvalService.ts"],
 

@@ -12,12 +12,12 @@ export class ApprovalService {
       throw new Error("Invoice not found.");
     }
 
-    if (invoice.approvals.some((approval) => approval.approverId === user.id)) {
-      throw new Error("The same user cannot approve an invoice twice.");
-    }
-
     if (invoice.status !== "PENDING") {
       throw new Error("Only pending invoices can be approved.");
+    }
+
+    if (invoice.approvals.some((approval) => approval.approverId === user.id)) {
+      throw new Error("The same user cannot approve an invoice twice.");
     }
 
     // Invoices up to 50,000: Manager or Director can approve.
@@ -35,6 +35,10 @@ export class ApprovalService {
     }
 
     // Invoices above 500,000 require two distinct approvers.
+    if (invoice.approvals.length >= 2) {
+      throw new Error("Invoice has already received the required approvals.");
+    }
+
     if (invoice.approvals.length === 0) {
       return this.recordApproval(invoice, user, "PENDING");
     }
@@ -44,11 +48,7 @@ export class ApprovalService {
       throw new Error("The second approver must be a Director.");
     }
 
-    if (invoice.approvals.length === 1) {
-      return this.recordApproval(invoice, user, "APPROVED");
-    }
-
-    throw new Error("Invoice has already received the required approvals.");
+    return this.recordApproval(invoice, user, "APPROVED");
   }
 
   private recordApproval(
@@ -62,6 +62,7 @@ export class ApprovalService {
         ...invoice.approvals,
         {
           approverId: user.id,
+          approverName: user.name,
           approverRole: user.role,
           approvedAt: new Date(),
         },

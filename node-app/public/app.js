@@ -123,7 +123,20 @@ function renderInvoices(invoices) {
     const approvals = document.createElement("p");
     approvals.textContent = `Approvals received: ${invoice.approvals.length}`;
 
-    card.append(heading, amount, status, approvals);
+    const historyHeading = document.createElement("h4");
+    historyHeading.textContent = "Approval history";
+
+    const approvalHistory = document.createElement("ul");
+    approvalHistory.setAttribute("aria-label", "Approval history");
+    invoice.approvals.forEach((approval) => {
+      const approvalRecord = document.createElement("li");
+      const approvedAt = new Date(approval.approvedAt).toLocaleString();
+      approvalRecord.textContent =
+        `${approval.approverName} (${approval.approverRole}) — approved at ${approvedAt}`;
+      approvalHistory.append(approvalRecord);
+    });
+
+    card.append(heading, amount, status, approvals, historyHeading, approvalHistory);
 
     if (invoice.status === "PENDING") {
       const button = document.createElement("button");
@@ -175,4 +188,3 @@ document.getElementById("logoutButton").addEventListener("click", () => {
   showMessage("loginMessage", "");
   showMessage("invoiceMessage", "");
 });
-

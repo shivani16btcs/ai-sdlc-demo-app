@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "hooks": {
+    "subagentStop": [
+      {
+        "type": "command",
+        "command": "node scripts/copilot-quality-check.mjs",
+        "cwd": "node-app",
+        "timeoutSec": 120,
+        "matcher": "Invoice Workflow Implementer|Implementation Agent"
+      }
+    ]
+  }
+}

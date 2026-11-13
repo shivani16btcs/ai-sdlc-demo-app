@@ -9,6 +9,7 @@ export interface Invoice {
 
 export interface Approval {
   approverId: string;
+  approverName: string;
   approverRole: "MANAGER" | "DIRECTOR";
   approvedAt: Date;
 }
